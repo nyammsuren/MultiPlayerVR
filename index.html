@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MultiPlayer VR</title>
+
+  <style>
+    * { box-sizing: border-box; }
+    body { margin:0; overflow:hidden; background:#202533; font-family: Arial, sans-serif; color:#fff; }
+    canvas { display:block; }
+    #VRButton {
+      position: absolute !important;
+      bottom: 24px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+    }
+
+    /* ===== НЭВТРЭХ ЦОНХ ===== */
+    #join {
+      position: fixed; inset: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(20, 24, 36, 0.92);
+      padding: 16px;
+    }
+    #join .card {
+      width: 100%; max-width: 380px;
+      background: #2b3247; border-radius: 12px; padding: 28px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    #join h1 { margin: 0 0 6px; font-size: 24px; }
+    #join p  { margin: 0 0 20px; color: #aab3c8; font-size: 14px; line-height: 1.5; }
+    #join label { display:block; font-size: 13px; color:#aab3c8; margin: 12px 0 6px; }
+    #join input {
+      width: 100%; padding: 10px 12px; font-size: 16px;
+      border-radius: 8px; border: 1px solid #47506a; background:#1d2233; color:#fff;
+    }
+    #join button {
+      width: 100%; margin-top: 22px; padding: 12px; font-size: 16px; font-weight: bold;
+      border: 0; border-radius: 8px; background:#2f7cf6; color:#fff; cursor:pointer;
+    }
+    #join button:disabled { background:#4a5470; cursor: default; }
+    #joinMsg { margin-top: 12px; font-size: 13px; color:#ffb35c; min-height: 18px; }
+
+    /* ===== HUD ===== */
+    #hud {
+      position: fixed; top: 16px; left: 16px; z-index: 5;
+      width: 260px; max-width: calc(100vw - 32px);
+      background: rgba(20, 24, 36, 0.82); border-radius: 10px; padding: 14px;
+      font-size: 14px; display: none;
+    }
+    #hud .row { display:flex; justify-content: space-between; align-items:center; gap: 8px; }
+    #hud .muted-txt { color:#aab3c8; font-size: 12px; }
+    #hud ul { list-style: none; margin: 10px 0; padding: 0; }
+    #hud li { display:flex; align-items:center; gap: 8px; padding: 4px 0; }
+    #hud .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+    #hud .spk { margin-left:auto; font-size: 12px; color:#5ce08a; visibility: hidden; }
+    #hud .spk.on { visibility: visible; }
+    #hud .mic-off { margin-left:auto; font-size: 12px; color:#ff6b6b; }
+    #hud button {
+      padding: 7px 10px; font-size: 13px; border:0; border-radius: 6px;
+      background:#3a4460; color:#fff; cursor:pointer;
+    }
+    #hud button.off { background:#c0392b; }
+    #hud .btns { display:flex; gap: 8px; margin-top: 6px; }
+    #hud .btns button { flex: 1; }
+    #micBar { height: 4px; background:#3a4460; border-radius: 2px; margin-top: 8px; overflow:hidden; }
+    #micBar div { height: 100%; width: 0%; background:#5ce08a; transition: width 0.08s; }
+    #help { margin-top: 10px; font-size: 12px; color:#aab3c8; line-height: 1.5; }
+    #status { margin-top: 6px; font-size: 12px; color:#ffb35c; }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+      "trystero": "https://cdn.jsdelivr.net/npm/trystero@0.26.0/+esm"
+    }
+  }
+  </script>
+</head>
+<body>
+
+<!-- Нэвтрэх цонх -->
+<div id="join">
+  <div class="card">
+    <h1>MultiPlayer VR</h1>
+    <p>Нэг өрөөнд олон хэрэглэгч орж, микрофоноор хоорондоо ярилцана. Ижил өрөөний кодтой хүмүүс нэг өрөөнд орно.</p>
+    <label for="nameInput">Таны нэр</label>
+    <input id="nameInput" maxlength="20" autocomplete="off">
+    <label for="roomInput">Өрөөний код</label>
+    <input id="roomInput" maxlength="30" autocomplete="off">
+    <button id="joinBtn">Өрөөнд орох</button>
+    <div id="joinMsg"></div>
+  </div>
+</div>
+
+<!-- Компьютер дээрх мэдээллийн самбар -->
+<div id="hud">
+  <div class="row">
+    <b id="hudRoom"></b>
+    <span class="muted-txt" id="hudCount"></span>
+  </div>
+  <ul id="hudList"></ul>
+  <div class="btns">
+    <button id="muteBtn">🎤 Микрофон</button>
+    <button id="copyBtn">🔗 Холбоос</button>
+  </div>
+  <div id="micBar"><div></div></div>
+  <div id="status"></div>
+  <div id="help">
+    W A S D — хөдлөх · Хулганаар чирж эргэх<br>
+    M — микрофон асаах/унтраах<br>
+    VR: зүүн жойстик — хөдлөх, баруун — эргэх, X — микрофон
+  </div>
+</div>
+
+<script type="module" src="./js/main.js"></script>
+
+</body>
+</html>
