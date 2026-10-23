@@ -178,14 +178,17 @@ $("copyBtn").addEventListener("click", () => {
 // HUD + САМБАР ШИНЭЧЛЭХ
 // ======================
 let lastBoardKey = "";
+let myLastLoud = -Infinity;
 
 function refreshPeopleUI() {
     if (!network) return;
     const myLevel = micAnalyser && !myMuted ? audioLevel(micAnalyser, micBuf) : 0;
     $("micBar").firstElementChild.style.width = Math.round(myLevel * 100) + "%";
+    if (myLevel > 0.08) myLastLoud = performance.now();
+    const mySpeaking = performance.now() - myLastLoud < 500;
 
     const people = [
-        { name: myName, color: myColor, muted: myMuted, speaking: myLevel > 0.08, self: true },
+        { name: myName, color: myColor, muted: myMuted, speaking: mySpeaking, self: true },
         ...Object.values(avatars).map(a => ({
             name: a.name, color: a.color, muted: a.muted, speaking: a.speaking, self: false,
         })),

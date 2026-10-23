@@ -95,7 +95,7 @@ export function createRoom(scene) {
         new THREE.PlaneGeometry(3.2, 2.0),
         new THREE.MeshBasicMaterial({ map: tex })
     );
-    board.position.set(0, 2.3, -RD / 2 + 0.03);
+    board.position.set(0, 2.3, -RD / 2 + 0.05); // хүрээний урд талаас (+0.03) зайтай — z-fighting гаргахгүй
     room.add(board);
 
     const frame = new THREE.Mesh(new THREE.BoxGeometry(3.35, 2.15, 0.04), mat(0x2b3247, 0.5));

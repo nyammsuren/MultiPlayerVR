@@ -87,6 +87,7 @@ export function createAvatar(scene, { name, color }) {
 
     const euler = new THREE.Euler(0, 0, 0, "YXZ");
     const buf = new Uint8Array(256);
+    let lastLoud = -Infinity;
 
     const avatar = {
         root,
@@ -178,7 +179,10 @@ export function createAvatar(scene, { name, color }) {
 
             // Ярьж байгаа эсэх — нүүрний хаалт гэрэлтэнэ
             const lvl = avatar.analyser ? audioLevel(avatar.analyser, buf) : 0;
-            avatar.speaking = lvl > 0.08;
+            // Чимээ тасарснаас хойш 0.5 сек "ярьж байна" хэвээр — анивчихгүй
+            const now = performance.now();
+            if (lvl > 0.08) lastLoud = now;
+            avatar.speaking = now - lastLoud < 500;
             visorMat.emissiveIntensity += ((avatar.speaking ? 0.4 + lvl * 2 : 0) - visorMat.emissiveIntensity) * k;
         },
 
